@@ -3,6 +3,8 @@ let products = [];
 let currentUser = JSON.parse(localStorage.getItem('lumiere_user')) || null;
 let cart = loadCart();
 let currentCategory = 'all';
+let isSubscribed = false;
+
 
 // Initialize the application
 async function init() {
@@ -13,6 +15,7 @@ async function init() {
     setupForms();
     setupNewsletter();
     handleRoute(window.location.pathname);
+
     
     // Listen to browser navigation (back/forward)
     window.addEventListener('popstate', () => {
@@ -466,6 +469,23 @@ function validatePassword(password) {
     return true;
 }
 
+function togglePasswordVisibility(inputId, toggleIcon) {
+    const input = document.getElementById(inputId);
+    const icon = toggleIcon.querySelector('i');
+    
+    if (input && icon) {
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        } else {
+            input.type = 'password';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        }
+    }
+}
+
 function updateRuleFeedback(prefix, val) {
     const lenRule = document.getElementById(`${prefix}-rule-length`);
     const upRule = document.getElementById(`${prefix}-rule-upper`);
@@ -543,10 +563,36 @@ function setupForms() {
         // Real-time UI validation feedback
         const signupPass = document.getElementById('signup-password');
         const signupErrDiv = document.getElementById('signup-error');
+        const confirmPass = document.getElementById('confirm-password');
+        const confirmMsg = document.getElementById('confirm-password-msg');
+
+        const validateConfirmPassword = () => {
+            if (confirmPass && signupPass && confirmPass.value) {
+                confirmMsg.style.display = 'block';
+                if (confirmPass.value === signupPass.value) {
+                    confirmMsg.innerText = 'Passwords match';
+                    confirmMsg.style.color = '#10b981';
+                } else {
+                    confirmMsg.innerText = 'Passwords do not match';
+                    confirmMsg.style.color = '#ef4444';
+                }
+            } else if (confirmMsg) {
+                confirmMsg.style.display = 'none';
+            }
+        };
+
         if (signupPass) {
             signupPass.addEventListener('input', (e) => {
                 updateRuleFeedback('signup', e.target.value);
                 signupErrDiv.innerText = ''; // Clear redundant error message since UI is guiding them
+                validateConfirmPassword();
+            });
+        }
+
+        if (confirmPass) {
+            confirmPass.addEventListener('input', () => {
+                signupErrDiv.innerText = ''; 
+                validateConfirmPassword();
             });
         }
 
@@ -555,9 +601,15 @@ function setupForms() {
             const name = document.getElementById('signup-name').value;
             const email = document.getElementById('signup-email').value;
             const password = document.getElementById('signup-password').value;
+            const confirmPassword = confirmPass ? confirmPass.value : '';
             const errDiv = document.getElementById('signup-error');
             errDiv.innerText = '';
             
+            if (password !== confirmPassword) {
+                errDiv.innerText = "Passwords do not match";
+                return;
+            }
+
             if (!validatePassword(password)) {
                 errDiv.innerText = "Password must contain at least one uppercase letter, one number, and be at least 6 characters long";
                 return;
@@ -604,48 +656,45 @@ function setupForms() {
 
 // Newsletter Setup
 function setupNewsletter() {
-    const newsForm = document.getElementById('newsletter-form');
-    if(!newsForm) return;
+    // Optional legacy event handler override if needed
+}
 
-    newsForm.onsubmit = async (e) => {
-        e.preventDefault();
-        const emailInput = document.getElementById('newsletter-email');
-        const feedback = document.getElementById('newsletter-feedback');
-        const email = emailInput.value;
-
-        if(!email || !email.includes('@')) {
-            feedback.style.color = '#ef4444'; // Red error
-            feedback.innerText = 'Please provide a valid email address.';
-            return;
+function toggleSubscription() {
+    isSubscribed = !isSubscribed;
+    const toggleBtn = document.getElementById('toggle-subscribe-btn');
+    const feedback = document.getElementById('newsletter-feedback');
+    
+    if (isSubscribed) {
+        localStorage.setItem('lumiere_discount', 'WELCOME15');
+        if (toggleBtn) {
+            toggleBtn.innerText = 'Unsubscribe';
+            toggleBtn.style.backgroundColor = '#ef4444'; // Red
         }
-
-        try {
-            const res = await fetch('/api/subscribe', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email })
-            });
-            const data = await res.json();
-            
-            if(data.success) {
-                feedback.style.color = '#10b981'; // Green success
-                feedback.innerText = 'You got 15% off! Use code: WELCOME15 (Applied to cart)';
-                localStorage.setItem('lumiere_discount', 'WELCOME15');
-                emailInput.value = ''; // clear
-                if(cart.length > 0) renderCartPage();
-            } else {
-                feedback.style.color = '#ef4444';
-                feedback.innerText = data.error || 'Subscription failed.';
-            }
-        } catch(err) {
-            // Offline mock feedback
+        if (feedback) {
             feedback.style.color = '#10b981';
             feedback.innerText = 'You got 15% off! Use code: WELCOME15 (Applied to cart)';
-            localStorage.setItem('lumiere_discount', 'WELCOME15');
-            emailInput.value = '';
-            if(cart.length > 0) renderCartPage();
         }
-    };
+        showToast('Subscribed successfully');
+    } else {
+        localStorage.removeItem('lumiere_discount');
+        if (toggleBtn) {
+            toggleBtn.innerText = 'Subscribe';
+            toggleBtn.style.backgroundColor = '#10b981'; // Green
+        }
+        if (feedback) {
+            feedback.innerText = '';
+        }
+        showToast('Unsubscribed successfully');
+    }
+    
+    updateTotal();
+}
+
+function updateTotal() {
+    // Re-rendering the cart page fully recalculates subtotal, discount, and total
+    if (cart.length > 0) {
+        renderCartPage();
+    }
 }
 
 // Format page titles nicely
