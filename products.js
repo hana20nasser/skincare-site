@@ -1,3 +1,4 @@
+// Products Management - Person 3
 const products = [
     {
         id: 1,
@@ -72,3 +73,4 @@ const products = [
         skinType: "oily"
     }
 ];
+
