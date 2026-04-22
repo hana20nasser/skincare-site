@@ -1,3 +1,4 @@
+// Admin Dashboard Logic - Updated by Hana
 // Completely isolated Admin Management Logic (Does not interact with cart or SPA script.js)
 let cachedProducts = [];
 
@@ -278,3 +279,4 @@ window.executeDelete = async function() {
         closeDeleteModal();
     }
 };
+
