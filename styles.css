@@ -738,6 +738,31 @@ body.dark-mode .form-group input { border: 1px solid rgba(255,255,255,0.1); }
     box-shadow: 0 0 0 3px rgba(244, 114, 182, 0.2);
 }
 
+.password-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.password-wrapper input {
+    padding-right: 2.5rem; /* Make room for the view icon */
+}
+
+.toggle-password {
+    position: absolute;
+    right: 1rem;
+    cursor: pointer;
+    color: var(--text-secondary);
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.toggle-password:hover {
+    color: var(--primary-hover);
+}
+
 .google-btn {
     width: 100%;
     background-color: white;
