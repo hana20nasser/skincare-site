@@ -1,4 +1,8 @@
+<<<<<<< feature/api-products
 // Feature: Products logic module
+=======
+// Products Management - Person 3
+>>>>>>> main
 const products = [
     {
         id: 1,
@@ -73,3 +77,4 @@ const products = [
         skinType: "oily"
     }
 ];
+
