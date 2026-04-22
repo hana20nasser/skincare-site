@@ -1,3 +1,4 @@
+// Feature: Products logic module
 const products = [
     {
         id: 1,
