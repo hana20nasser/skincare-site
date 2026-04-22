@@ -1,10 +1,10 @@
-# 🧴 Skincare Website
+# Skincare Website
 
 A simple skincare e-commerce website with an admin dashboard for managing products.
 
 ---
 
-## 🚀 Project Description
+##  Project Description
 
 This project is a skincare website where users can browse products, and an admin panel to manage products (add, edit, delete).
 
@@ -16,20 +16,20 @@ It is built using:
 
 ---
 
-## ✨ Features
+##  Features
 
-### 🏠 User Side
+###  User Side
 - Home page UI
 - Product listing page
 - Cart functionality (if available)
 
-### 🛠️ Admin Side
+###  Admin Side
 - Admin dashboard UI
 - Add new products
 - Edit products
 - Delete products
 
-### ⚙️ Backend
+###  Backend
 - Server setup (Node.js)
 - Products API
 - Data handling
