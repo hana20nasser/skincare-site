@@ -127,7 +127,9 @@ function toggleDarkMode() {
 }
 
 // Render product card HTML
+// Generates HTML structure for a single product card (used in product listings)
 function generateProductCardHTML(product) {
+    // Validate product image before rendering
     const safeImageStr = product.image.startsWith('/') || product.image.startsWith('http') ? product.image : '/' + product.image;
     return `
         <div class="product-card" onclick="navigate('product-details', ${product.id})">
