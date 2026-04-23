@@ -1,3 +1,4 @@
+//hana
 // Admin Scripts - Person 3
 // Completely isolated Admin Management Logic (Does not interact with cart or SPA script.js)
 let cachedProducts = [];
