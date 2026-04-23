@@ -1,5 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
-
+/* Theme Colors & Design Tokens
+   (Used for light/dark mode & consistency)*/
 :root {
     --primary-color: #fbcfe8; /* Pastel pink */
     --primary-hover: #f472b6;
