@@ -1,5 +1,4 @@
-// Global State
-let products = [];
+// Global State (products loaded from products.js)
 let currentUser = JSON.parse(localStorage.getItem('lumiere_user')) || null;
 let cart = loadCart();
 let currentCategory = 'all';
@@ -23,20 +22,11 @@ async function init() {
     });
 }
 
-// Fetch products from our new Node.js backend
+// Load products from local products.js (no backend needed)
 async function fetchProducts() {
-    try {
-        const response = await fetch('/api/products');
-        if(response.ok) {
-            products = await response.json();
-            renderFeaturedProducts();
-            renderAllProducts(products);
-        } else {
-            console.warn("Backend not running, falling back to empty products.");
-        }
-    } catch(err) {
-        console.warn("Backend not running, falling back to empty products.", err);
-    }
+    // products is already defined globally in products.js
+    renderFeaturedProducts();
+    renderAllProducts(products);
 }
 
 // SPA Routing via Intercepting Clicks
@@ -63,6 +53,8 @@ function handleRoute(path, push = true) {
     
     if (path === '/' || path === '/home') pageId = 'home';
     else if (path === '/products') pageId = 'products';
+    else if (path === '/skin-analysis') pageId = 'skin-analysis';
+    else if (path === '/routine') pageId = 'routine';
     else if (path.startsWith('/product/')) {
         pageId = 'product-details';
         param = path.split('/')[2];
@@ -127,14 +119,12 @@ function toggleDarkMode() {
 }
 
 // Render product card HTML
-// Generates HTML structure for a single product card (used in product listings)
 function generateProductCardHTML(product) {
-    // Validate product image before rendering
-    const safeImageStr = product.image.startsWith('/') || product.image.startsWith('http') ? product.image : '/' + product.image;
+    const safeImageStr = product.image;
     return `
         <div class="product-card" onclick="navigate('product-details', ${product.id})">
             <div class="product-img-wrapper">
-                <img src="${encodeURI(safeImageStr)}" alt="${product.name}" loading="lazy">
+                <img src="${safeImageStr}" alt="${product.name}" loading="lazy">
                 <div class="add-to-cart-overlay">
                     <button class="btn btn-primary" onclick="event.stopPropagation(); addToCart(${product.id})" style="width: 100%;">
                         Quick Add
@@ -223,11 +213,11 @@ function renderProductDetails(productId) {
     
     const container = document.getElementById('product-detail-view');
     
-    const safeImageStr = product.image.startsWith('/') || product.image.startsWith('http') ? product.image : '/' + product.image;
+    const safeImageStr = product.image;
     container.innerHTML = `
         <div class="detail-image-gallery" style="position: relative;">
             <button class="detail-close-btn" onclick="history.back() || navigatePath('/products')">X</button>
-            <img src="${encodeURI(safeImageStr)}" alt="${product.name}" class="detail-main-img">
+            <img src="${safeImageStr}" alt="${product.name}" class="detail-main-img">
         </div>
         <div class="detail-info">
             <div class="product-category" style="margin-bottom: 1rem;">${product.category} • Perfect for ${product.skinType} skin</div>
@@ -426,9 +416,13 @@ async function processCheckout() {
     const total = subtotal + shipping;
 
     try {
+        const token = localStorage.getItem('lumiere_token') || '';
         const res = await fetch('/api/checkout', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
             body: JSON.stringify({ cartItems: cart, totalAmount: total })
         });
         const data = await res.json();
@@ -439,7 +433,7 @@ async function processCheckout() {
             navigate('home');
         }
     } catch(e) {
-        showToast("Error processing order. Is backend running?");
+        showToast("Error processing order. Make sure the server is running (npm start).");
     }
 }
 
