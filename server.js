@@ -1,184 +1,147 @@
 const express = require('express');
-const cors = require('cors');
-const path = require('path');
+const bcrypt  = require('bcryptjs');
+const jwt     = require('jsonwebtoken');
+const cors    = require('cors');
+const path    = require('path');
 
 const app = express();
+const PORT = process.env.PORT || 3000;
+const JWT_SECRET = process.env.JWT_SECRET || 'lumiere_secret_key_2024';
 
-// -------------------- MIDDLEWARE --------------------
+// ─── Middleware ────────────────────────────────────────────────────────────────
 app.use(cors());
 app.use(express.json());
 
-// Serve frontend static files
+// Serve all static files (HTML, CSS, JS, images) from this folder
 app.use(express.static(path.join(__dirname)));
 
-// -------------------- MOCK DATABASE --------------------
-const products = [
-    { id: 1, name: 'Ela De Pure Hydrating Gel Cleanser', category: 'cleanser', price: 14.00, image: 'images/Ela De Pure Gentle Gel Wash.jpg', rating: 4.8 },
-    { id: 2, name: 'Mitudo Gentle Sulfate-Free Cleanser', category: 'cleanser', price: 12.00, image: 'images/Mitudo Skin Balance Cleanser.jpg', rating: 4.7 },
-    { id: 3, name: 'Anne Semonin Oligo Cleansing Gel', category: 'cleanser', price: 15.00, image: 'images/Anne Semonin Gentle Purifying Gel Cleanser.jpg', rating: 4.9 }
-];
+// ─── In-Memory Database (no external DB needed) ───────────────────────────────
+// Format: { email: { name, email, hashedPassword } }
+const users = {};
 
-// -------------------- USERS DB --------------------
-const users = [];
+// ─── Helper ───────────────────────────────────────────────────────────────────
+function generateToken(user) {
+    return jwt.sign(
+        { email: user.email, name: user.name },
+        JWT_SECRET,
+        { expiresIn: '7d' }
+    );
+}
 
-// -------------------- PUBLIC APIs --------------------
+// ─── Auth Middleware ──────────────────────────────────────────────────────────
+function requireAuth(req, res, next) {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+    try {
+        req.user = jwt.verify(authHeader.split(' ')[1], JWT_SECRET);
+        next();
+    } catch {
+        res.status(401).json({ error: 'Invalid or expired token' });
+    }
+}
 
-// Get all products
+// ─── API Routes ───────────────────────────────────────────────────────────────
+
+// GET /api/products — returns all products from products.js as JSON
+// We read the products array by simply requiring the file.
+// products.js uses `const products = [...]` without module.exports,
+// so we extract it with a small eval wrapper.
+const products = require('./products');
+
+console.log(`✅ Loaded ${products.length} products`);
+
 app.get('/api/products', (req, res) => {
     res.json(products);
 });
 
-// Get product by ID
-app.get('/api/products/:id', (req, res) => {
-    const product = products.find(p => p.id === parseInt(req.params.id));
-    if (!product) return res.status(404).json({ error: 'Product not found' });
-    res.json(product);
-});
-
-// -------------------- AUTH --------------------
-
-// Login
-app.post('/api/login', (req, res) => {
-    const { email, password } = req.body;
-
-    if (!email || !password) {
-        return res.status(400).json({ error: 'Email and password required' });
-    }
-
-    const user = users.find(u => u.email === email);
-
-    if (!user || user.password !== password) {
-        return res.status(401).json({ error: 'Invalid credentials' });
-    }
-
-    res.json({
-        message: 'Login successful',
-        user: { email: user.email, name: user.name },
-        token: 'mock-token'
-    });
-});
-
-// Signup
-app.post('/api/signup', (req, res) => {
+// POST /api/signup
+app.post('/api/signup', async (req, res) => {
     const { name, email, password } = req.body;
 
     if (!name || !email || !password) {
-        return res.status(400).json({ error: 'Missing fields' });
+        return res.status(400).json({ error: 'All fields are required' });
     }
 
-    if (users.find(u => u.email === email)) {
-        return res.status(400).json({ error: 'Email already exists' });
+    if (users[email]) {
+        return res.status(409).json({ error: 'An account with this email already exists' });
     }
 
-    users.push({ name, email, password });
+    // Validate password: min 6 chars, at least 1 uppercase, at least 1 number
+    if (password.length < 6 || !/[A-Z]/.test(password) || !/[0-9]/.test(password)) {
+        return res.status(400).json({
+            error: 'Password must be at least 6 characters and contain one uppercase letter and one number'
+        });
+    }
 
-    res.json({
-        message: 'Account created',
-        user: { name, email }
-    });
+    const hashedPassword = await bcrypt.hash(password, 10);
+    users[email] = { name, email, hashedPassword };
+
+    const user   = { name, email };
+    const token  = generateToken(user);
+
+    console.log(`✅ New user registered: ${email}`);
+    res.status(201).json({ token, user, message: `Welcome to Lumière, ${name}!` });
 });
 
-// -------------------- CHECKOUT --------------------
-app.post('/api/checkout', (req, res) => {
-    const { cartItems } = req.body;
+// POST /api/login
+app.post('/api/login', async (req, res) => {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+        return res.status(400).json({ error: 'Email and password are required' });
+    }
+
+    const account = users[email];
+    if (!account) {
+        return res.status(401).json({ error: 'No account found with this email' });
+    }
+
+    const valid = await bcrypt.compare(password, account.hashedPassword);
+    if (!valid) {
+        return res.status(401).json({ error: 'Incorrect password' });
+    }
+
+    const user  = { name: account.name, email: account.email };
+    const token = generateToken(user);
+
+    console.log(`✅ User logged in: ${email}`);
+    res.json({ token, user, message: `Welcome back, ${account.name}!` });
+});
+
+// POST /api/checkout  (requires login)
+app.post('/api/checkout', requireAuth, (req, res) => {
+    const { cartItems, totalAmount } = req.body;
 
     if (!cartItems || cartItems.length === 0) {
         return res.status(400).json({ error: 'Cart is empty' });
     }
 
+    // In a real app you would: validate stock, charge payment, save order to DB.
+    // Here we just confirm the order and log it.
+    const orderSummary = cartItems.map(item =>
+        `  - ${item.name} x${item.quantity}  ($${(item.price * item.quantity).toFixed(2)})`
+    ).join('\n');
+
+    console.log(`\n🛍️  New order from ${req.user.name} (${req.user.email})`);
+    console.log(orderSummary);
+    console.log(`  Total: $${Number(totalAmount).toFixed(2)}\n`);
+
     res.json({
         success: true,
-        message: 'Order placed successfully',
-        orderId: Math.floor(Math.random() * 100000)
+        message: `Order confirmed! Thank you, ${req.user.name}. Your Lumière products are on their way 💫`
     });
 });
 
-// -------------------- SUBSCRIBE --------------------
-let subscribers = [];
-
-app.post('/api/subscribe', (req, res) => {
-    const { email } = req.body;
-
-    if (!email || !email.includes('@')) {
-        return res.status(400).json({ error: 'Invalid email' });
-    }
-
-    subscribers.push(email);
-
-    res.json({ success: true, message: 'Subscribed successfully' });
+// ─── SPA Catch-All (must be LAST) ─────────────────────────────────────────────
+// Any path that isn't an API route or a static file returns index.html
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// -------------------- ADMIN --------------------
-
-// Admin auth middleware
-function verifyAdmin(req, res, next) {
-    if (req.headers.authorization === 'Bearer mock-jwt-admin-token') {
-        next();
-    } else {
-        res.status(403).json({ error: 'Forbidden' });
-    }
-}
-
-// Admin products
-app.get('/api/admin/products', verifyAdmin, (req, res) => {
-    res.json(products);
+// ─── Start Server ─────────────────────────────────────────────────────────────
+app.listen(PORT, () => {
+    console.log(`\n✨ Lumière server running at http://localhost:${PORT}`);
+    console.log(`   Press Ctrl+C to stop\n`);
 });
-
-// Add product
-app.post('/api/admin/products', verifyAdmin, (req, res) => {
-    const newProduct = { id: Date.now(), ...req.body };
-    products.push(newProduct);
-    res.json(newProduct);
-});
-
-// Update product
-app.put('/api/admin/products/:id', verifyAdmin, (req, res) => {
-    const id = parseInt(req.params.id);
-    const index = products.findIndex(p => p.id === id);
-
-    if (index === -1) return res.status(404).json({ error: 'Not found' });
-
-    products[index] = { ...products[index], ...req.body };
-
-    res.json(products[index]);
-});
-
-// Delete product
-app.delete('/api/admin/products/:id', verifyAdmin, (req, res) => {
-    const id = parseInt(req.params.id);
-    const index = products.findIndex(p => p.id === id);
-
-    if (index === -1) return res.status(404).json({ error: 'Not found' });
-
-    products.splice(index, 1);
-
-    res.json({ success: true });
-});
-
-// Admin users
-app.get('/api/admin/users', verifyAdmin, (req, res) => {
-    res.json(users);
-});
-
-// -------------------- ADMIN PAGE --------------------
-app.get('/admin', (req, res) => {
-    res.sendFile(path.join(__dirname, 'admin.html'));
-});
-
-// -------------------- 404 HANDLER (IMPORTANT) --------------------
-app.use((req, res) => {
-    res.status(404).json({ error: 'Route not found' });
-});
-
-// -------------------- START SERVER --------------------
-const PORT = process.env.PORT || 3000;
-
-if (process.env.NODE_ENV !== 'test') {
-    app.listen(PORT, () => {
-        console.log(`\n✨ Backend server running`);
-        console.log(`🌐 http://localhost:${PORT}`);
-        console.log(`📦 http://localhost:${PORT}/api/products\n`);
-    });
-}
-
-module.exports = app;
