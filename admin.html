@@ -1,357 +1,143 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lumière Skin | Korean Beauty Aesthetics</title>
-    <meta name="description" content="Discover premium Korean skincare. Minimalist, clean, and aesthetic beauty for a radiant glow.">
-    <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="analyzer.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>Lumière Secure Admin Dashboard</title>
+    <!-- Completely isolated CSS -->
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #fdfdfd; color: #333; margin: 0; padding: 0; }
+        .container { max-width: 1000px; margin: 0 auto; padding: 2rem; }
+        table { width: 100%; border-collapse: collapse; margin-top: 1rem; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        th, td { padding: 1rem; border-bottom: 1px solid #eee; text-align: left; }
+        th { background: #f9f9f9; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.5px; color: #666; }
+        .btn { padding: 0.5rem 1rem; border: none; cursor: pointer; border-radius: 4px; background: #18181b; color: white; transition: 0.2s; }
+        .btn:hover { background: #333; }
+        .btn-danger { background: #ef4444; }
+        .btn-danger:hover { background: #dc2626; }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; font-size: 0.9rem; }
+        .form-group input, .form-group textarea { width: 100%; padding: 0.6rem; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        #modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.4); justify-content:center; align-items:center; z-index: 1000;}
+        .modal-content { background: white; padding: 2rem; width: 90%; max-width: 450px; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        
+        .auth-card { background: white; padding: 2.5rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); max-width: 400px; margin: 4rem auto; }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; border-bottom: 2px solid #eee; padding-bottom: 1rem; }
+    </style>
 </head>
 <body>
-<header>
-    <div class="container nav-wrapper">
-        <nav>
-            <a href="/" class="logo">Lumière</a>
-            <ul class="nav-links">
-                <li><a href="/" class="active">Home</a></li>
-                <li><a href="/products">Products</a></li>
-                <li><a href="/routine">Routine</a></li>
-                <li><a href="/skin-analysis" class="nav-skin-link">Skin Analysis</a></li>
-                <li><a href="/about">About Us</a></li>
-            </ul>
-            <div class="nav-icons">
-                <button class="icon-btn" onclick="toggleDarkMode()" aria-label="Toggle Dark Mode"><i class="fa-solid fa-moon" id="theme-icon"></i></button>
-                <button class="icon-btn" id="nav-user-btn" aria-label="Account"><i class="fa-regular fa-user"></i></button>
-                <button class="icon-btn" onclick="navigatePath('/cart')" aria-label="Cart">
-                    <i class="fa-solid fa-bag-shopping"></i><span class="cart-count" id="cart-badge">0</span>
-                </button>
-            </div>
-        </nav>
-    </div>
-</header>
-
-<main>
-
-<!-- HOME -->
-<section id="home" class="page-section active">
-    <div class="hero">
-        <div class="blob"></div>
-        <div class="container">
-            <div class="hero-content">
-                <span class="hero-tag">New Collection</span>
-                <h1>Discover Your Natural Glow</h1>
-                <p>Experience the gentle power of Korean skincare. Formulated with pure ingredients for a radiant, dewy complexion.</p>
-                <div style="display:flex;gap:1rem;flex-wrap:wrap;">
-                    <button class="btn btn-primary" onclick="navigatePath('/products')">Shop Collection</button>
-                    <button class="btn btn-outline" onclick="navigatePath('/skin-analysis')"><i class="fa-solid fa-camera" style="margin-right:.4rem;"></i>Analyse My Skin</button>
-                </div>
-            </div>
-            <div class="hero-image"><img src="images/Nuance Firming Day Cream.jpg" alt="Lumière Day Cream"></div>
-        </div>
-    </div>
-    <div class="featured-products container">
-        <h2 class="section-title">Trending <span>Now</span></h2>
-        <div class="product-grid" id="featured-grid"></div>
-    </div>
-    <div class="container promo-container" style="margin-top:4rem;margin-bottom:4rem;">
-        <div class="promo-box">
-            <h2 style="font-size:2.5rem;margin-bottom:1rem;">Get 15% Off Your First Order</h2>
-            <p style="margin-bottom:2rem;max-width:600px;margin-inline:auto;">Join our newsletter and receive beauty tips, exclusive offers, and early access to new launches.</p>
-            <div style="display:flex;gap:1rem;max-width:400px;margin:0 auto;">
-                <input type="email" id="newsletter-email" placeholder="Your email address" style="flex:1;padding:.75rem 1.5rem;border-radius:var(--radius-full);border:2px solid white;outline:none;" required>
-                <button type="button" id="toggle-subscribe-btn" class="btn" style="background-color:#10b981;color:white;border:2px solid transparent;" onclick="toggleSubscription()">Subscribe</button>
-            </div>
-            <div id="newsletter-feedback" style="margin-top:1rem;font-weight:600;min-height:24px;"></div>
-        </div>
-    </div>
-</section>
-
-<!-- SKIN ANALYSIS PAGE -->
-<section id="skin-analysis" class="page-section">
-    <div class="sa-page">
-        <div class="sa-top-row container">
-
-            <!-- Camera card -->
-            <div class="sa-card sa-camera-card">
-                <div class="sa-tabs">
-                    <button class="sa-tab active" id="tab-camera" onclick="saTab('camera')"><i class="fa-solid fa-camera"></i> Use Camera</button>
-                    <button class="sa-tab" id="tab-upload" onclick="saTab('upload')"><i class="fa-regular fa-image"></i> Upload Photo</button>
-                </div>
-
-                <div id="sa-camera-view">
-                    <div class="sa-cam-wrap">
-                        <video id="sa-video" autoplay playsinline></video>
-                        <canvas id="sa-canvas" style="display:none;"></canvas>
-                        <div class="sa-scan-overlay">
-                            <span class="sa-corner sa-tl"></span><span class="sa-corner sa-tr"></span>
-                            <span class="sa-corner sa-bl"></span><span class="sa-corner sa-br"></span>
-                            <div class="sa-oval"></div>
-                            <p class="sa-cam-label">Position your face within the guide</p>
-                        </div>
-                        <img id="sa-captured-img" style="display:none;width:100%;height:100%;object-fit:cover;object-position:top;border-radius:16px;" alt="Captured">
-                    </div>
-                    <div class="sa-cam-btns">
-                        <button class="btn btn-primary sa-capture-btn" id="sa-capture-btn" onclick="saCapture()"><i class="fa-solid fa-camera"></i> Capture &amp; Analyse</button>
-                        <button class="btn btn-outline" id="sa-start-btn" onclick="saStartCamera()"><i class="fa-solid fa-video"></i> Start Camera</button>
-                    </div>
-                </div>
-
-                <div id="sa-upload-view" style="display:none;">
-                    <label class="sa-upload-drop" for="sa-file-input">
-                        <i class="fa-solid fa-cloud-arrow-up sa-upload-icon"></i>
-                        <p>Click or drag a photo here</p>
-                        <span>JPG, PNG, WEBP</span>
-                        <input type="file" id="sa-file-input" accept="image/*" onchange="saHandleUpload(this)" style="display:none;">
-                    </label>
-                    <div id="sa-upload-preview" style="display:none;" class="sa-upload-preview-wrap">
-                        <img id="sa-upload-img" src="" alt="Preview" style="width:100%;border-radius:12px;max-height:280px;object-fit:cover;object-position:top;">
-                        <button class="btn btn-primary" style="margin-top:1rem;width:100%;" onclick="saAnalyseUploaded()"><i class="fa-solid fa-wand-magic-sparkles"></i> Analyse This Photo</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Results card -->
-            <div class="sa-card sa-results-card" id="sa-results-card">
-                <!-- Empty -->
-                <div id="sa-empty-state" class="sa-empty">
-                    <div class="sa-empty-icon">✦</div>
-                    <h3>Your Skin Analysis Results</h3>
-                    <p>Capture or upload a photo to get your personalised skin analysis and product recommendations.</p>
-                    <ul class="sa-empty-list">
-                        <li><i class="fa-solid fa-circle-check"></i> Instant skin type detection</li>
-                        <li><i class="fa-solid fa-circle-check"></i> Concern identification</li>
-                        <li><i class="fa-solid fa-circle-check"></i> Personalised product picks</li>
-                    </ul>
-                </div>
-                <!-- Analysing -->
-                <div id="sa-analysing-state" style="display:none;" class="sa-analysing">
-                    <div class="sa-spin-rings">
-                        <div class="sa-ring sa-ring-1"></div><div class="sa-ring sa-ring-2"></div><div class="sa-ring sa-ring-3"></div>
-                        <span class="sa-ring-icon">✦</span>
-                    </div>
-                    <p class="sa-analysing-title">Analysing Your Skin…</p>
-                    <div class="sa-analysis-steps">
-                        <div class="sa-astep" id="astep-1"><i class="fa-solid fa-circle-dot"></i> Reading skin tone &amp; texture</div>
-                        <div class="sa-astep" id="astep-2"><i class="fa-solid fa-circle-dot"></i> Identifying your skin type</div>
-                        <div class="sa-astep" id="astep-3"><i class="fa-solid fa-circle-dot"></i> Detecting skin concerns</div>
-                        <div class="sa-astep" id="astep-4"><i class="fa-solid fa-circle-dot"></i> Selecting best products</div>
-                    </div>
-                </div>
-                <!-- Results -->
-                <div id="sa-results-state" style="display:none;">
-                    <p class="sa-section-label">YOUR SKIN ANALYSIS RESULTS</p>
-                    <div class="sa-skin-type-row">
-                        <div class="sa-skin-type-icon" id="sa-skin-icon">🧴</div>
-                        <div>
-                            <p class="sa-skin-type-sub">Skin Type</p>
-                            <h2 class="sa-skin-type-name" id="sa-skin-type-name">Combination Skin</h2>
-                            <p class="sa-skin-type-desc" id="sa-skin-type-desc"></p>
-                        </div>
-                    </div>
-                    <p class="sa-section-label" style="margin-top:1.5rem;">Detected Skin Concerns</p>
-                    <div class="sa-concerns-grid" id="sa-concerns-grid"></div>
-                    <p class="sa-section-label" style="margin-top:1.5rem;">Recommended For You</p>
-                    <div class="sa-rec-products" id="sa-rec-products"></div>
-                    <button class="btn btn-outline" style="margin-top:1.5rem;width:100%;" onclick="saReset()"><i class="fa-solid fa-rotate-left"></i> Scan Again</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Bottom row -->
-        <div class="sa-bottom-row container">
-            <div class="sa-card sa-detect-card">
-                <h3 class="sa-card-title">What We Detect</h3>
-                <ul class="sa-detect-list">
-                    <li><div class="sa-detect-icon" style="background:#ffe4e6;">🔴</div><div><strong>Acne</strong><p>Detects pimples and breakouts</p></div></li>
-                    <li><div class="sa-detect-icon" style="background:#dbeafe;">💧</div><div><strong>Dryness</strong><p>Detects dry or flaky areas</p></div></li>
-                    <li><div class="sa-detect-icon" style="background:#fef9c3;">🟡</div><div><strong>Pigmentation</strong><p>Detects dark spots &amp; uneven tone</p></div></li>
-                    <li><div class="sa-detect-icon" style="background:#ede9fe;">👁️</div><div><strong>Dark Circles</strong><p>Detects darkness under eyes</p></div></li>
-                    <li><div class="sa-detect-icon" style="background:#dcfce7;">✨</div><div><strong>Oiliness</strong><p>Detects excess sebum and shine</p></div></li>
-                    <li><div class="sa-detect-icon" style="background:#fce7f3;">🌸</div><div><strong>Sensitivity</strong><p>Detects redness and irritation</p></div></li>
-                </ul>
-            </div>
-            <div class="sa-card sa-routine-card" id="sa-routine-card">
-                <h3 class="sa-card-title">Recommended Routine</h3>
-                <div id="sa-routine-empty" style="color:var(--text-secondary);font-size:.9rem;padding:1rem 0;">Complete your skin analysis to see your personalised routine.</div>
-                <div id="sa-routine-content" style="display:none;">
-                    <div class="sa-routine-steps" id="sa-routine-steps"></div>
-                    <div class="sa-routine-dots" id="sa-routine-dots"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- ROUTINE -->
-<section id="routine" class="page-section">
-    <div class="container" style="max-width:800px;padding:4rem 2rem;text-align:center;">
-        <h1 style="font-size:3rem;margin-bottom:1rem;">Build Your <span style="color:var(--primary-hover);">Routine</span></h1>
-        <p style="color:var(--text-secondary);font-size:1.1rem;margin-bottom:2rem;">Start with a skin analysis to get your personalised routine.</p>
-        <button class="btn btn-primary" onclick="navigatePath('/skin-analysis')"><i class="fa-solid fa-camera"></i> Analyse My Skin</button>
-    </div>
-</section>
-
-<!-- PRODUCTS -->
-<section id="products" class="page-section">
-    <div class="container">
-        <div class="products-header">
-            <div class="category-filters" style="display:flex;flex-wrap:wrap;justify-content:center;gap:1rem;margin-bottom:3rem;">
-                <button class="filter-btn active" onclick="filterProducts('all')">All</button>
-                <button class="filter-btn" onclick="filterProducts('cleanser')">Cleansers</button>
-                <button class="filter-btn" onclick="filterProducts('serum')">Serums &amp; Essences</button>
-                <button class="filter-btn" onclick="filterProducts('moisturizer')">Moisturizers</button>
-                <button class="filter-btn" onclick="filterProducts('sunscreen')">Sun Care</button>
-                <button class="filter-btn" onclick="filterProducts('mask')">Masks</button>
-                <button class="filter-btn" onclick="filterProducts('body')">Body Care</button>
-                <button class="filter-btn" onclick="filterProducts('hair')">Hair Care</button>
-                <button class="filter-btn" onclick="filterProducts('hand')">Hand Care</button>
-                <button class="filter-btn" onclick="filterProducts('toner')">Toners</button>
-                <button class="filter-btn" onclick="filterProducts('powder')">Powder</button>
-                <button class="filter-btn" onclick="filterProducts('lip')">Lip Care</button>
-            </div>
-            <i class="fa-solid fa-search"></i>
-            <input type="text" id="search-input" placeholder="Search products..." onkeyup="searchProducts()">
-        </div>
-    </div>
-    <div class="product-grid" id="all-products-grid"></div>
-</section>
-
-<!-- PRODUCT DETAILS -->
-<section id="product-details" class="page-section">
-    <div class="container product-detail-container" id="product-detail-view"></div>
-</section>
-
-<!-- CART -->
-<section id="cart" class="page-section">
-    <div class="container">
-        <h2 class="section-title" style="text-align:left;margin-bottom:2rem;">Your Bag</h2>
-        <div class="cart-container" id="cart-content"></div>
-    </div>
-</section>
-
-<!-- LOGIN -->
-<section id="login" class="page-section">
-    <div class="container" style="display:flex;justify-content:center;align-items:center;min-height:70vh;">
-        <div class="auth-container active-auth-view" id="login-form-view">
-            <h2 class="auth-title">Welcome Back</h2>
-            <div id="login-error" style="color:#ef4444;margin-bottom:1rem;font-size:.9rem;font-weight:500;text-align:center;"></div>
-            <form id="login-form">
-                <div class="form-group"><label for="login-email">Email Address</label><input type="email" id="login-email" placeholder="you@example.com" required></div>
+    <div class="container" id="auth-section">
+        <div class="auth-card">
+            <h2 style="margin-top: 0;">Admin Portal Access</h2>
+            <p style="color: #666; font-size: 0.9rem; margin-bottom: 1.5rem;">Secure zone. Please provide administrative credentials.</p>
+            <div id="error" style="color: #ef4444; margin-bottom: 1rem; font-size: 0.9rem;"></div>
+            <form id="admin-login-form">
                 <div class="form-group">
-                    <label for="login-password">Password</label>
-                    <div class="password-wrapper">
-                        <input type="password" id="login-password" placeholder="••••••••" required>
-                        <span class="toggle-password" onclick="togglePasswordVisibility('login-password',this)"><i class="fa-regular fa-eye"></i></span>
-                    </div>
-                    <div id="login-password-rules" style="font-size:.8rem;margin-top:.5rem;display:flex;flex-direction:column;gap:.3rem;">
-                        <span id="login-rule-length" style="color:#666">• At least 6 characters</span>
-                        <span id="login-rule-upper" style="color:#666">• At least 1 uppercase letter (A-Z)</span>
-                        <span id="login-rule-number" style="color:#666">• At least 1 number (0-9)</span>
-                    </div>
+                    <label>Administrator Email</label>
+                    <input type="email" id="email" required>
                 </div>
-                <button type="submit" class="btn btn-primary" style="width:100%;">Sign In</button>
-            </form>
-            <div class="divider"><span>OR</span></div>
-            <button class="btn google-btn"><i class="fa-brands fa-google"></i> Continue with Google</button>
-            <div class="auth-switch">Don't have an account? <a href="#" onclick="event.preventDefault();toggleAuthView();">Create one</a></div>
-        </div>
-        <div class="auth-container" id="signup-form-view" style="display:none;">
-            <h2 class="auth-title">Create Account</h2>
-            <div id="signup-error" style="color:#ef4444;margin-bottom:1rem;font-size:.9rem;font-weight:500;text-align:center;"></div>
-            <form id="signup-form">
-                <div class="form-group"><label>Full Name</label><input type="text" id="signup-name" placeholder="Name" required></div>
-                <div class="form-group"><label>Email Address</label><input type="email" id="signup-email" placeholder="you@example.com" required></div>
                 <div class="form-group">
                     <label>Password</label>
-                    <div class="password-wrapper">
-                        <input type="password" id="signup-password" placeholder="Min 6 characters" required>
-                        <span class="toggle-password" onclick="togglePasswordVisibility('signup-password',this)"><i class="fa-regular fa-eye"></i></span>
-                    </div>
-                    <div id="signup-password-rules" style="font-size:.8rem;margin-top:.5rem;display:flex;flex-direction:column;gap:.3rem;">
-                        <span id="signup-rule-length" style="color:#666">• At least 6 characters</span>
-                        <span id="signup-rule-upper" style="color:#666">• At least 1 uppercase letter (A-Z)</span>
-                        <span id="signup-rule-number" style="color:#666">• At least 1 number (0-9)</span>
-                    </div>
+                    <input type="password" id="password" required>
                 </div>
-                <div class="form-group">
-                    <label>Confirm Password</label>
-                    <div class="password-wrapper">
-                        <input type="password" id="confirm-password" placeholder="Confirm your password" required>
-                        <span class="toggle-password" onclick="togglePasswordVisibility('confirm-password',this)"><i class="fa-regular fa-eye"></i></span>
-                    </div>
-                    <div id="confirm-password-msg" style="font-size:.8rem;margin-top:.5rem;display:none;"></div>
+                <button type="submit" class="btn" style="width: 100%; margin-top: 0.5rem;">Authenticate</button>
+                <div style="text-align: center; margin-top: 1.5rem;">
+                    <a href="/" style="color:#666; text-decoration: none; font-size: 0.9rem;">&larr; Return to public site</a>
                 </div>
-                <button type="submit" class="btn btn-primary" style="width:100%;">Sign Up</button>
             </form>
-            <div class="divider"><span>OR</span></div>
-            <button class="btn google-btn"><i class="fa-brands fa-google"></i> Sign up with Google</button>
-            <div class="auth-switch">Already have an account? <a href="#" onclick="event.preventDefault();toggleAuthView();">Sign in</a></div>
         </div>
     </div>
-</section>
 
-<!-- ABOUT -->
-<section id="about" class="page-section">
-    <div class="container">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:center;padding:4rem 0;">
-            <div><img src="images/ourstory.jpg" alt="Our Story" style="width:100%;border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);"></div>
+    <div class="container" id="dashboard-section" style="display: none;">
+        <div class="top-bar">
+            <h2 style="margin: 0;">Inventory Management</h2>
             <div>
-                <span class="hero-tag">Our Story</span>
-                <h1 style="font-size:3rem;margin-bottom:1.5rem;">Inspired by true Korean aesthetic rituals.</h1>
-                <p style="color:var(--text-secondary);font-size:1.1rem;margin-bottom:1.5rem;">At Lumière, we believe that self-care is not just a routine, but a delicate, mindful ritual. Rooted deeply in Korean skincare philosophy.</p>
-                <p style="color:var(--text-secondary);font-size:1.1rem;margin-bottom:2rem;">We prioritize gentle, high-quality botanical ingredients meticulously blended to unveil your most radiant, healthy glass skin.</p>
-                <button class="btn btn-primary" onclick="navigatePath('/products')">Explore Collection</button>
+                <button class="btn" onclick="showModal()">+ Add Product</button>
+                <button class="btn" onclick="logout()" style="background:#f4f4f5; color:#18181b; border: 1px solid #ddd; margin-left: 1rem;">Logout</button>
+                <a class="btn" href="/" style="text-decoration:none; background:#f4f4f5; color:#18181b; border: 1px solid #ddd; margin-left: 0.5rem;">Storefront</a>
             </div>
         </div>
+        <div style="margin-bottom: 1rem;">
+            <input type="text" id="admin-search" placeholder="Search products by name..." style="width: 100%; max-width: 400px; padding: 0.6rem; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Image</th>
+                    <th>Name</th>
+                    <th>Category</th>
+                    <th>Price</th>
+                    <th style="text-align: right;">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="table-body">
+                <tr><td colspan="6" style="text-align: center; color: #666;">Loading inventory data...</td></tr>
+            </tbody>
+        </table>
+        
+        <div style="margin-top: 4rem; border-top: 2px solid #eee; padding-top: 2rem; margin-bottom: 2rem;">
+            <h2 style="margin-top: 0;">User Management</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th style="text-align: right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="users-body">
+                    <tr><td colspan="4" style="text-align: center; color: #666;">Loading users...</td></tr>
+                </tbody>
+            </table>
+        </div>
     </div>
-</section>
 
-<!-- CONTACT -->
-<section id="contact" class="page-section">
-    <div class="container" style="max-width:600px;padding:4rem 0;">
-        <h1 class="section-title">Get in <span>Touch</span></h1>
-        <p style="text-align:center;color:var(--text-secondary);margin-bottom:3rem;">Have questions about your routine or an order? We're here to help.</p>
-        <div class="auth-container" style="max-width:100%;">
-            <form onsubmit="event.preventDefault();showToast('Message sent!');this.reset();">
-                <div class="form-group"><label>Full Name</label><input type="text" placeholder="Your Name" required></div>
-                <div class="form-group"><label>Email Address</label><input type="email" placeholder="you@example.com" required></div>
-                <div class="form-group"><label>Message</label><textarea placeholder="How can we help?" rows="5" style="width:100%;padding:.75rem 1rem;border:1px solid rgba(0,0,0,0.1);border-radius:var(--radius-md);background:var(--background-color);color:var(--text-primary);outline:none;" required></textarea></div>
-                <button type="submit" class="btn btn-primary" style="width:100%;margin-top:1rem;">Send Message</button>
+    <div id="modal">
+        <div class="modal-content">
+            <h3 id="modal-title" style="margin-top:0;">Add Product</h3>
+            <form id="product-form">
+                <input type="hidden" id="p-id">
+                <div class="form-group"><label>Product Name</label><input type="text" id="p-name" required></div>
+                <div class="form-group"><label>Category</label><input type="text" id="p-category" placeholder="e.g. serum, cleanser" required></div>
+                <div class="form-group"><label>Price ($)</label><input type="number" step="0.01" min="0" id="p-price" required></div>
+                <div class="form-group"><label>Image Route URL</label><input type="text" id="p-image" placeholder="images/filename.jpg" required></div>
+                <div class="form-group"><label>Description</label><textarea id="p-desc" rows="3"></textarea></div>
+                <div style="text-align: right; margin-top: 1.5rem;">
+                    <button type="button" class="btn" style="background:#f4f4f5; color:#18181b; border:1px solid #ddd; margin-right: 0.5rem;" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn">Confirm Save</button>
+                </div>
             </form>
         </div>
-        <div style="text-align:center;margin-top:3rem;"><p style="color:var(--text-secondary);">Or email us directly at<br><strong>hello@lumiereskin.com</strong></p></div>
     </div>
-</section>
 
-<section id="text-page" class="page-section"></section>
-
-</main>
-
-<footer>
-    <div class="container">
-        <div class="footer-grid">
-            <div class="footer-col">
-                <h3 class="logo">Lumière</h3>
-                <p>Elevating your daily routine with gentle, effective Korean skincare essentials.</p>
-                <div class="social-links">
-                    <a href="#"><i class="fa-brands fa-instagram"></i></a>
-                    <a href="#"><i class="fa-brands fa-tiktok"></i></a>
-                    <a href="#"><i class="fa-brands fa-pinterest"></i></a>
-                </div>
+    <!-- Delete Confirm Modal -->
+    <div id="delete-modal" style="display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); justify-content:center; align-items:center; z-index: 1000;">
+        <div class="modal-content" style="text-align: center;">
+            <h3 style="margin-top:0;">Confirm Deletion</h3>
+            <p>Are you sure you want to delete this product?</p>
+            <div style="margin-top: 1.5rem; display: flex; justify-content: center; gap: 1rem;">
+                <button class="btn" style="background:#f4f4f5; color:#18181b; border:1px solid #ddd;" onclick="closeDeleteModal()">Cancel</button>
+                <button class="btn btn-danger" onclick="executeDelete()">Confirm</button>
             </div>
-            <div class="footer-col"><h3>Shop</h3><ul class="footer-links"><li><a href="/products">All Products</a></li><li><a href="/best-sellers">Best Sellers</a></li><li><a href="/new-arrivals">New Arrivals</a></li><li><a href="/sets-gifts">Sets &amp; Gifts</a></li></ul></div>
-            <div class="footer-col"><h3>Help</h3><ul class="footer-links"><li><a href="/faq">FAQ</a></li><li><a href="/shipping">Shipping</a></li><li><a href="/returns">Returns</a></li><li><a href="/track-order">Track Order</a></li></ul></div>
-            <div class="footer-col"><h3>About</h3><ul class="footer-links"><li><a href="/about">Our Story</a></li><li><a href="/ingredients">Ingredients</a></li><li><a href="/sustainability">Sustainability</a></li><li><a href="/contact">Contact Us</a></li></ul></div>
         </div>
-        <div class="footer-bottom"><p>&copy; 2026 Lumière Skincare. All rights reserved.</p></div>
     </div>
-</footer>
 
-<div class="toast-container" id="toast-container"></div>
-<script src="products.js"></script>
-<script src="script.js"></script>
-<script src="analyzer.js"></script>
+    <!-- Save Confirm Modal -->
+    <div id="save-modal" style="display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); justify-content:center; align-items:center; z-index: 1100;">
+        <div class="modal-content" style="text-align: center;">
+            <h3 style="margin-top:0;">Confirm Action</h3>
+            <p id="save-modal-text">Are you sure you want to add this product?</p>
+            <div style="margin-top: 1.5rem; display: flex; justify-content: center; gap: 1rem;">
+                <button class="btn" style="background:#f4f4f5; color:#18181b; border:1px solid #ddd;" onclick="closeSaveModal()">Cancel</button>
+                <button class="btn" onclick="executeSave()">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="admin.js"></script>
 </body>
 </html>
+
