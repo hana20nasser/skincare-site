@@ -19,6 +19,16 @@ app.use(express.static(path.join(__dirname)));
 // Format: { email: { name, email, hashedPassword } }
 const users = {};
 
+// Seed admin account on startup
+(async () => {
+    users['admin@lumiere.com'] = {
+        name: 'Secure Administrator',
+        email: 'admin@lumiere.com',
+        hashedPassword: await bcrypt.hash('Admin123', 10)
+    };
+    console.log('✅ Admin account seeded');
+})();
+
 // ─── Helper ───────────────────────────────────────────────────────────────────
 function generateToken(user) {
     return jwt.sign(
@@ -132,6 +142,84 @@ app.post('/api/checkout', requireAuth, (req, res) => {
         success: true,
         message: `Order confirmed! Thank you, ${req.user.name}. Your Lumière products are on their way 💫`
     });
+});
+
+// ─── Admin Middleware ──────────────────────────────────────────────────────────
+function verifyAdmin(req, res, next) {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(403).json({ error: 'System Forbidden: Admin access strictly required' });
+    }
+    try {
+        const decoded = jwt.verify(authHeader.split(' ')[1], JWT_SECRET);
+        if (decoded.email !== 'admin@lumiere.com') {
+            return res.status(403).json({ error: 'System Forbidden: Admin access strictly required' });
+        }
+        req.user = decoded;
+        next();
+    } catch {
+        res.status(403).json({ error: 'System Forbidden: Admin access strictly required' });
+    }
+}
+
+// ─── Admin API Routes ──────────────────────────────────────────────────────────
+
+// GET /api/admin/products
+app.get('/api/admin/products', verifyAdmin, (req, res) => {
+    res.json(products);
+});
+
+// POST /api/admin/products
+app.post('/api/admin/products', verifyAdmin, (req, res) => {
+    const newProduct = { id: Date.now(), ...req.body };
+    products.push(newProduct);
+    res.json({ message: 'Product committed to memory', product: newProduct });
+});
+
+// PUT /api/admin/products/:id
+app.put('/api/admin/products/:id', verifyAdmin, (req, res) => {
+    const id = parseInt(req.params.id);
+    const index = products.findIndex(p => p.id === id);
+    if (index === -1) return res.status(404).json({ error: 'DB Product index not found' });
+    products[index] = { ...products[index], ...req.body, id };
+    res.json({ message: 'Product updated effectively', product: products[index] });
+});
+
+// DELETE /api/admin/products/:id
+app.delete('/api/admin/products/:id', verifyAdmin, (req, res) => {
+    const id = parseInt(req.params.id);
+    const index = products.findIndex(p => p.id === id);
+    if (index !== -1) {
+        products.splice(index, 1);
+        res.json({ success: true, message: 'Deleted' });
+    } else {
+        res.status(404).json({ error: 'Not found' });
+    }
+});
+
+// GET /api/admin/users
+app.get('/api/admin/users', verifyAdmin, (req, res) => {
+    const displayUsers = Object.values(users).map(u => ({ email: u.email, name: u.name, role: 'Customer' }));
+    displayUsers.unshift({ email: 'admin@lumiere.com', name: 'Secure Administrator', role: 'Admin' });
+    res.json(displayUsers);
+});
+
+// DELETE /api/admin/users/:email
+app.delete('/api/admin/users/:email', verifyAdmin, (req, res) => {
+    const emailToDrop = req.params.email;
+    if (emailToDrop === 'admin@lumiere.com') return res.status(403).json({ error: 'Prohibited' });
+    if (users[emailToDrop]) {
+        delete users[emailToDrop];
+        res.json({ success: true });
+    } else {
+        res.status(404).json({ error: 'User not found in memory' });
+    }
+});
+
+// ─── Admin Dashboard Route ─────────────────────────────────────────────────────
+// Must be BEFORE the SPA catch-all
+app.get('/admin', (req, res) => {
+    res.sendFile(path.join(__dirname, 'admin.html'));
 });
 
 // ─── SPA Catch-All (must be LAST) ─────────────────────────────────────────────
